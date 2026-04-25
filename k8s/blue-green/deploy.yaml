@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aceest-blue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aceest-bluegreen
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: aceest-bluegreen
+        version: blue
+    spec:
+      containers:
+        - name: aceest-fitness
+          image: gokulggowdabits/aceest-fitness:v1.0
+          ports:
+            - containerPort: 5000
+          imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aceest-green
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aceest-bluegreen
+      version: green
+  template:
+    metadata:
+      labels:
+        app: aceest-bluegreen
+        version: green
+    spec:
+      containers:
+        - name: aceest-fitness
+          image: gokulggowdabits/aceest-fitness:v2.0
+          ports:
+            - containerPort: 5000
+          imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aceest-bluegreen-service
+spec:
+  type: NodePort
+  selector:
+    app: aceest-bluegreen
+    version: blue
+  ports:
+    - port: 80
+      targetPort: 5000
+      nodePort: 30082

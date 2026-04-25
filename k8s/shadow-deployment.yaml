@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aceest-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aceest-shadow
+      role: production
+  template:
+    metadata:
+      labels:
+        app: aceest-shadow
+        role: production
+    spec:
+      containers:
+        - name: aceest-fitness
+          image: gokulggowdabits/aceest-fitness:v1.0
+          ports:
+            - containerPort: 5000
+          imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aceest-shadow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aceest-shadow
+      role: shadow
+  template:
+    metadata:
+      labels:
+        app: aceest-shadow
+        role: shadow
+    spec:
+      containers:
+        - name: aceest-fitness
+          image: gokulggowdabits/aceest-fitness:v2.0
+          ports:
+            - containerPort: 5000
+          imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aceest-shadow-service
+spec:
+  type: NodePort
+  selector:
+    app: aceest-shadow
+    role: production
+  ports:
+    - port: 80
+      targetPort: 5000
+      nodePort: 30086
