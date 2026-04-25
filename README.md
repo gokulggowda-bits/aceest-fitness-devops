@@ -188,3 +188,40 @@ Jenkins is configured with a pipeline that:
 4. Executes Pytest suite inside the container
 5. Pushes the image to Docker Hub
 6. Deploys to Kubernetes with rolling update
+
+## Docker Hub
+
+Images are published to Docker Hub:
+
+- Repository: https://hub.docker.com/r/YOUR_DOCKERHUB_USERNAME/aceest-fitness
+- Tags: v1.0, v2.0, latest
+
+## Kubernetes Deployment
+
+The application is deployed on a Kubernetes cluster with multiple strategies:
+
+| Strategy        | Port  | Description                                     |
+| --------------- | ----- | ----------------------------------------------- |
+| Base            | 30080 | Standard deployment with 2 replicas             |
+| Rolling Update  | 30081 | Zero-downtime update from v1.0 to v2.0          |
+| Blue-Green      | 30082 | Instant switch between blue (v1) and green (v2) |
+| Canary          | 30083 | Gradual rollout — 67% stable, 33% canary        |
+| A/B Testing (A) | 30084 | Version A (v1.0) for user segment A             |
+| A/B Testing (B) | 30085 | Version B (v2.0) for user segment B             |
+| Shadow          | 30086 | Production (v1.0) + shadow (v2.0) silently      |
+
+## Jenkins CI/CD
+
+Jenkins is configured at http://YOUR_ELASTIC_IP:8080 with a pipeline that:
+
+1. Checks out code from GitHub
+2. Builds a Docker image
+3. Runs flake8 linting
+4. Executes Pytest suite
+5. Pushes the image to Docker Hub
+6. Deploys to Kubernetes with rolling update
+
+## SonarQube
+
+Code quality analysis performed with SonarQube.
+Results show zero bugs, zero vulnerabilities, and minimal code smells.
