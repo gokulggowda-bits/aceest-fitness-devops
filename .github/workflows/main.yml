@@ -2,17 +2,20 @@ name: ACEest CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
     branches: [main]
 
 jobs:
+  # ──────────── JOB 1: BUILD, LINT, TEST ────────────
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -23,23 +26,53 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Lint with flake8
-        run: |
-          pip install flake8
-          flake8 app.py --max-line-length=180 --count --show-source --statistics
+        run: flake8 app.py --max-line-length=120 --count --show-source --statistics
 
       - name: Run Pytest Suite
         run: pytest tests/ -v
 
-  docker-build:
+  # ──────────── JOB 2: SONARCLOUD ANALYSIS ────────────
+  sonarcloud:
     runs-on: ubuntu-latest
     needs: build-and-test
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Build Docker Image
-        run: docker build -t aceest-fitness .
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.host.url=https://sonarcloud.io
+
+  # ──────────── JOB 3: DOCKER BUILD AND PUSH ────────────
+  docker-build-push:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, sonarcloud]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/aceest-fitness:${{ github.sha }} .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/aceest-fitness:latest .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/aceest-fitness:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/aceest-fitness:latest
 
       - name: Run Tests Inside Container
-        run: docker run aceest-fitness pytest tests/ -v
+        run: |
+          docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/aceest-fitness:latest pytest tests/ -v
