@@ -83,6 +83,13 @@ def calculate_bmi():
 
     return jsonify({"bmi": bmi, "category": category})
 
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "version": "2.0",
+        "service": "ACEest Fitness API"
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

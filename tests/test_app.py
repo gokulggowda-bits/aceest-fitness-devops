@@ -118,3 +118,11 @@ def test_all_programs_have_required_fields():
         assert "diet" in details, f"{name} missing diet"
         assert "calorie_factor" in details, f"{name} missing calorie_factor"
         assert details["calorie_factor"] > 0, f"{name} has invalid calorie_factor"
+        
+#---------- HEALTH CHECK ENDPOINT ----------
+def test_health_check(client):
+    resp = client.get("/health")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "healthy"
+    assert data["version"] == "2.0"
