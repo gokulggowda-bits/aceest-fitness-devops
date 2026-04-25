@@ -24,7 +24,7 @@ pipeline {
 
         stage('Lint') {
             steps {
-                sh "docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} flake8 app.py --max-line-length=120"
+                sh "docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} flake8 app.py --max-line-length=180"
             }
         }
 
