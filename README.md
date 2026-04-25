@@ -136,3 +136,55 @@ Jenkins serves as a secondary BUILD and quality gate:
 - **GitHub Actions** — CI/CD pipeline automation
 - **Jenkins** — Secondary build server and quality gate
 - **flake8** — Python linting and style enforcement
+
+## CI/CD Pipeline Architecture
+
+### Automated Flow (triggered on every git push to main):
+
+Git Push → GitHub Actions:
+├── Job 1: Install → Lint (flake8) → Test (Pytest)
+├── Job 2: SonarCloud Code Quality Analysis
+└── Job 3: Docker Build → Push to Docker Hub → Container Test
+Git Push → Jenkins (polls every 5 min):
+├── Checkout → Build Docker Image
+├── Lint → Test (inside container)
+├── Push to Docker Hub
+└── Deploy to Kubernetes (rolling update)
+
+## Docker Hub
+
+Images are published to Docker Hub with version tags:
+
+- Repository: https://hub.docker.com/r/gokulggowdabits/aceest-fitness
+- Tags: v1.0, v2.0, latest
+
+## SonarCloud
+
+Code quality analysis is automated via SonarCloud on every push.
+
+- Dashboard: https://sonarcloud.io/project/overview?id=gokulggowda-bits_aceest-fitness-devops
+
+## Kubernetes Deployment
+
+The application is deployed on a Kubernetes cluster (AWS EC2 + k3s) with multiple strategies:
+
+| Strategy        | Port  | Description                                     |
+| --------------- | ----- | ----------------------------------------------- |
+| Base            | 30080 | Standard deployment with replicas               |
+| Rolling Update  | 30081 | Zero-downtime update from v1.0 to v2.0          |
+| Blue-Green      | 30082 | Instant switch between blue (v1) and green (v2) |
+| Canary          | 30083 | Gradual rollout with stable + canary pods       |
+| A/B Testing (A) | 30084 | Version A (v1.0) for user segment A             |
+| A/B Testing (B) | 30085 | Version B (v2.0) for user segment B             |
+| Shadow          | 30086 | Production serves traffic, shadow runs silently |
+
+## Jenkins CI/CD
+
+Jenkins is configured with a pipeline that:
+
+1. Checks out code from GitHub
+2. Builds a Docker image
+3. Runs flake8 linting inside the container
+4. Executes Pytest suite inside the container
+5. Pushes the image to Docker Hub
+6. Deploys to Kubernetes with rolling update
